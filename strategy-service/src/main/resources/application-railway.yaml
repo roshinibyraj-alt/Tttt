@@ -1,7 +1,16 @@
+spring:
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+
 hft:
   mode: PAPER
   events:
     enabled: false
+  polymarket:
+    market-ws-enabled: true
+    gamma-url: https://gamma-api.polymarket.com
+    market-ws-stale-timeout-millis: 60000
+    market-ws-reconnect-backoff-millis: 5000
   executor:
     base-url: ${EXECUTOR_URL:http://executor-service:8080}
 

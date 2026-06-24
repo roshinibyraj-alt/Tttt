@@ -12,7 +12,7 @@
         "restartPolicyType": "ON_FAILURE",
         "restartPolicyMaxRetries": 10,
         "healthcheckPath": "/actuator/health",
-        "healthcheckTimeout": 120
+        "healthcheckTimeout": 180
       }
     },
     {
@@ -26,7 +26,7 @@
         "restartPolicyType": "ON_FAILURE",
         "restartPolicyMaxRetries": 10,
         "healthcheckPath": "/actuator/health",
-        "healthcheckTimeout": 120
+        "healthcheckTimeout": 180
       }
     }
   ]

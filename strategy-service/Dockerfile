@@ -16,4 +16,4 @@ FROM eclipse-temurin:21-jre
 WORKDIR /app
 COPY --from=builder /build/strategy-service/target/strategy-service-*.jar app.jar
 EXPOSE 8081
-ENTRYPOINT ["java", "-jar", "app.jar", "--spring.profiles.active=railway"]
+ENTRYPOINT ["java", "-Xmx256m", "-XX:+UseSerialGC", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar", "--spring.profiles.active=railway"]
