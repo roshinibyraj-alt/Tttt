@@ -25,7 +25,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * These are the markets the target user trades.
  *
  * Notes:
- * - Market universe is stable: BTC/ETH Up/Down 15m + 1h series only.
+ * - Market universe: BTC/ETH Up/Down 5m + 15m + 1h series.
  * - The replica strategy is intended to be market-neutral (no BTC direction bias); alpha is driven by
  *   platform mispricing + timing/execution, not by predicting Up vs Down.
  */
@@ -37,7 +37,9 @@ public class GabagoolMarketDiscovery {
     private static final Duration HTTP_TIMEOUT = Duration.ofSeconds(10);
     private static final ZoneId ET_ZONE = ZoneId.of("America/New_York");
 
-    // Slug patterns for the target user's target markets
+    // Slug patterns for target markets
+    // - 5min BTC: btc-updown-5m-{epoch}
+    // - 5min ETH: eth-updown-5m-{epoch}
     // - 15min BTC: btc-updown-15m-{epoch}
     // - 15min ETH: eth-updown-15m-{epoch}
     // - 1hour BTC: bitcoin-up-or-down-{date}
@@ -74,6 +76,7 @@ public class GabagoolMarketDiscovery {
             // Keep markets that are currently open.
             //
             // Empirical timing:
+            // - 5m series fills span ~0-5m before end
             // - 15m series fills span ~0-15m before end
             // - 1h series fills span ~0-60m before end
             //
@@ -87,7 +90,11 @@ public class GabagoolMarketDiscovery {
                     .filter(m -> m.endTime().isBefore(maxEnd))
                     .filter(m -> {
                         // Avoid tracking future market instances that haven't started trading yet.
-                        Duration duration = "updown-15m".equals(m.marketType()) ? Duration.ofMinutes(15) : Duration.ofHours(1);
+                        Duration duration = switch (m.marketType()) {
+                            case "updown-5m" -> Duration.ofMinutes(5);
+                            case "updown-15m" -> Duration.ofMinutes(15);
+                            default -> Duration.ofHours(1);
+                        };
                         Instant startTime = m.endTime().minus(duration);
                         return !now.isBefore(startTime);
                     })
@@ -124,6 +131,8 @@ public class GabagoolMarketDiscovery {
         Instant now = Instant.now();
 
         List<String> candidates = new ArrayList<>();
+        candidates.addAll(candidateUpDown5mSlugs("btc", now));
+        candidates.addAll(candidateUpDown5mSlugs("eth", now));
         candidates.addAll(candidateUpDown15mSlugs("btc", now));
         candidates.addAll(candidateUpDown15mSlugs("eth", now));
 
@@ -162,6 +171,23 @@ public class GabagoolMarketDiscovery {
         List<String> out = new ArrayList<>();
         for (long start = startFrom; start <= startTo; start += 900L) {
             out.add(assetPrefix + "-updown-15m-" + start);
+        }
+        return out;
+    }
+
+    private static List<String> candidateUpDown5mSlugs(String assetPrefix, Instant now) {
+        // Generate 5-minute interval slug candidates
+        long nowSec = now.getEpochSecond();
+        // Include current + previous interval, plus a lookahead
+        long from = nowSec - Duration.ofMinutes(10).toSeconds();
+        long to = nowSec + Duration.ofMinutes(5).toSeconds();
+
+        long startFrom = (from / 300L) * 300L;
+        long startTo = (to / 300L) * 300L;
+
+        List<String> out = new ArrayList<>();
+        for (long start = startFrom; start <= startTo; start += 300L) {
+            out.add(assetPrefix + "-updown-5m-" + start);
         }
         return out;
     }
@@ -211,7 +237,9 @@ public class GabagoolMarketDiscovery {
 
             // Determine market type
             String marketType;
-            if (slug.contains("updown-15m")) {
+            if (slug.contains("updown-5m")) {
+                marketType = "updown-5m";
+            } else if (slug.contains("updown-15m")) {
                 marketType = "updown-15m";
             } else if (slug.contains("up-or-down")) {
                 marketType = "up-or-down";
@@ -451,7 +479,16 @@ public class GabagoolMarketDiscovery {
 
     private Instant parseEndTimeFromSlug(String slug, String marketType) {
         try {
-            if (marketType.equals("updown-15m")) {
+            if (marketType.equals("updown-5m")) {
+                // Slug format: btc-updown-5m-1734364800
+                // Last part is epoch, add 5 min for end time
+                String[] parts = slug.split("-");
+                if (parts.length >= 4) {
+                    String epochStr = parts[parts.length - 1];
+                    long epoch = Long.parseLong(epochStr);
+                    return Instant.ofEpochSecond(epoch + 300); // +5 minutes
+                }
+            } else if (marketType.equals("updown-15m")) {
                 // Slug format: btc-updown-15m-1734364800
                 // The last part is the epoch timestamp, add 15 min for end time
                 String[] parts = slug.split("-");

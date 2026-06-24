@@ -1,0 +1,35 @@
+hft:
+  mode: PAPER
+  events:
+    enabled: false
+  executor:
+    send-live-ack: false
+  polymarket:
+    auth:
+      private-key: ""
+      api-key: ""
+      api-secret: ""
+      api-passphrase: ""
+      nonce: 0
+
+server:
+  port: ${PORT:8080}
+
+executor:
+  sim:
+    enabled: true
+    fills-enabled: true
+    fill-poll-millis: 500
+    maker-fill-probability-per-poll: 0.01
+    maker-fill-probability-multiplier-per-tick: 1.0
+    maker-fill-probability-max-per-poll: 0.015
+    maker-fill-fraction-of-remaining: 0.25
+  onchain:
+    rpc-url: ""
+    proxy-wallet-factory-address: ""
+  settlement:
+    enabled: false
+
+logging:
+  level:
+    com.polybot.hft: INFO

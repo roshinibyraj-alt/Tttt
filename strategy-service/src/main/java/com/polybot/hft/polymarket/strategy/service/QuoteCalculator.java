@@ -214,6 +214,27 @@ public class QuoteCalculator {
         if (market == null || market.slug() == null) return null;
         String slug = market.slug();
 
+        if (slug.startsWith("btc-updown-5m-")) {
+            // BTC 5m sizing (share values stay same as original 1h, buckets scaled proportionately)
+            if (secondsToEnd < 5) return BigDecimal.valueOf(9);
+            if (secondsToEnd < 15) return BigDecimal.valueOf(10);
+            if (secondsToEnd < 25) return BigDecimal.valueOf(11);
+            if (secondsToEnd < 50) return BigDecimal.valueOf(12);
+            if (secondsToEnd < 75) return BigDecimal.valueOf(14);
+            if (secondsToEnd < 100) return BigDecimal.valueOf(15);
+            if (secondsToEnd < 150) return BigDecimal.valueOf(17);
+            return BigDecimal.valueOf(18);
+        }
+        if (slug.startsWith("eth-updown-5m-")) {
+            // ETH 5m sizing (share values stay same as original 1h, buckets scaled proportionately)
+            if (secondsToEnd < 5) return BigDecimal.valueOf(7);
+            if (secondsToEnd < 25) return BigDecimal.valueOf(8);
+            if (secondsToEnd < 50) return BigDecimal.valueOf(9);
+            if (secondsToEnd < 75) return BigDecimal.valueOf(11);
+            if (secondsToEnd < 100) return BigDecimal.valueOf(12);
+            if (secondsToEnd < 150) return BigDecimal.valueOf(13);
+            return BigDecimal.valueOf(14);
+        }
         if (slug.startsWith("btc-updown-15m-")) {
             if (secondsToEnd < 60) return BigDecimal.valueOf(11);
             if (secondsToEnd < 180) return BigDecimal.valueOf(13);

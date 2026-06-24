@@ -1,0 +1,53 @@
+hft:
+  mode: PAPER
+  events:
+    enabled: false
+  executor:
+    base-url: ${EXECUTOR_URL:http://executor-service:8080}
+
+  strategy:
+    gabagool:
+      enabled: true
+      refresh-millis: 100
+      min-replace-millis: 200
+      min-seconds-to-end: 0
+      max-seconds-to-end: 300
+
+      improve-ticks: 0
+
+      quote-size: 10
+      quote-size-bankroll-fraction: 0.0
+      bankroll-mode: FIXED
+      bankroll-usd: 1000
+      bankroll-refresh-millis: 10000
+      bankroll-smoothing-alpha: 0.2
+      bankroll-min-threshold: 50
+      bankroll-trading-fraction: 0.8
+      max-order-bankroll-fraction: 0.05
+      max-total-bankroll-fraction: 0.5
+
+      complete-set-min-edge: 0.001
+      complete-set-max-skew-ticks: 0
+      complete-set-imbalance-shares-for-max-skew: 5000
+
+      complete-set-top-up-enabled: true
+      complete-set-top-up-seconds-to-end: 10
+      complete-set-top-up-min-shares: 80
+
+      complete-set-fast-top-up-enabled: false
+      complete-set-fast-top-up-min-shares: 30
+      complete-set-fast-top-up-min-seconds-after-fill: 3
+      complete-set-fast-top-up-max-seconds-after-fill: 15
+      complete-set-fast-top-up-cooldown-millis: 4000
+      complete-set-fast-top-up-min-edge: 0
+
+      taker-mode-enabled: false
+      taker-mode-max-edge: 0.004
+      taker-mode-max-spread: 0.01
+
+server:
+  port: ${PORT:8081}
+
+logging:
+  level:
+    com.polybot.hft.polymarket.strategy: INFO

@@ -104,6 +104,22 @@ public class GabagoolDirectionalEngine {
         return !executor.isShutdown() && getConfig().enabled();
     }
 
+    public List<GabagoolMarket> getMarkets() {
+        return activeMarkets.get();
+    }
+
+    public OrderState getOrder(String tokenId) {
+        return orderManager != null ? orderManager.getOrder(tokenId) : null;
+    }
+
+    public Collection<OrderState> getAllOrders() {
+        return orderManager != null ? orderManager.getOpenOrders().values() : List.of();
+    }
+
+    public MarketInventory getInventory(String slug) {
+        return positionTracker != null ? positionTracker.getInventory(slug) : MarketInventory.empty();
+    }
+
     @PreDestroy
     void shutdown() {
         log.info("gabagool-directional shutting down");
@@ -147,7 +163,11 @@ public class GabagoolDirectionalEngine {
 
     private void evaluateMarket(GabagoolMarket market, GabagoolConfig cfg, Instant now) {
         long secondsToEnd = Duration.between(now, market.endTime()).getSeconds();
-        long maxLifetimeSeconds = "updown-15m".equals(market.marketType()) ? 900L : 3600L;
+        long maxLifetimeSeconds = switch (market.marketType()) {
+            case "updown-5m" -> 300L;
+            case "updown-15m" -> 900L;
+            default -> 3600L;
+        };
 
         if (secondsToEnd < 0 || secondsToEnd > maxLifetimeSeconds) {
             orderManager.cancelMarketOrders(market, CancelReason.OUTSIDE_LIFETIME, secondsToEnd);
